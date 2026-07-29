@@ -8,6 +8,7 @@ struct OSCPreset: Codable, Equatable, Identifiable {
     let sendEuler: Bool
     let sendGyroscope: Bool
     let sendAcceleration: Bool
+    let quaternionForwardAxis: QuaternionForwardAxis
     let quaternionAddress: String
     let eulerAddress: String
     let gyroscopeAddress: String
@@ -23,6 +24,7 @@ final class SettingsStore: ObservableObject {
     @Published var sendEuler: Bool { didSet { persistAndNotify() } }
     @Published var sendGyroscope: Bool { didSet { persistAndNotify() } }
     @Published var sendAcceleration: Bool { didSet { persistAndNotify() } }
+    @Published var quaternionForwardAxis: QuaternionForwardAxis { didSet { persistAndNotify() } }
     @Published var quaternionAddress: String { didSet { persistAndNotify() } }
     @Published var eulerAddress: String { didSet { persistAndNotify() } }
     @Published var gyroscopeAddress: String { didSet { persistAndNotify() } }
@@ -43,6 +45,7 @@ final class SettingsStore: ObservableObject {
         sendEuler = defaults.object(forKey: Keys.sendEuler) as? Bool ?? false
         sendGyroscope = defaults.object(forKey: Keys.sendGyroscope) as? Bool ?? false
         sendAcceleration = defaults.object(forKey: Keys.sendAcceleration) as? Bool ?? false
+        quaternionForwardAxis = QuaternionForwardAxis(rawValue: defaults.string(forKey: Keys.quaternionForwardAxis) ?? "") ?? .y
         quaternionAddress = defaults.string(forKey: Keys.quaternionAddress) ?? OSCAddressDefaults.quaternion
         eulerAddress = defaults.string(forKey: Keys.eulerAddress) ?? OSCAddressDefaults.euler
         gyroscopeAddress = defaults.string(forKey: Keys.gyroscopeAddress) ?? OSCAddressDefaults.gyroscope
@@ -59,6 +62,7 @@ final class SettingsStore: ObservableObject {
             sendEuler: sendEuler,
             sendGyroscope: sendGyroscope,
             sendAcceleration: sendAcceleration,
+            quaternionForwardAxis: quaternionForwardAxis,
             quaternionAddress: normalizedAddress(quaternionAddress, defaultValue: OSCAddressDefaults.quaternion),
             eulerAddress: normalizedAddress(eulerAddress, defaultValue: OSCAddressDefaults.euler),
             gyroscopeAddress: normalizedAddress(gyroscopeAddress, defaultValue: OSCAddressDefaults.gyroscope),
@@ -86,6 +90,7 @@ final class SettingsStore: ObservableObject {
         sendEuler = preset.sendEuler
         sendGyroscope = preset.sendGyroscope
         sendAcceleration = preset.sendAcceleration
+        quaternionForwardAxis = preset.quaternionForwardAxis
         quaternionAddress = preset.quaternionAddress
         eulerAddress = preset.eulerAddress
         gyroscopeAddress = preset.gyroscopeAddress
@@ -104,6 +109,7 @@ final class SettingsStore: ObservableObject {
         defaults.set(sendEuler, forKey: Keys.sendEuler)
         defaults.set(sendGyroscope, forKey: Keys.sendGyroscope)
         defaults.set(sendAcceleration, forKey: Keys.sendAcceleration)
+        defaults.set(quaternionForwardAxis.rawValue, forKey: Keys.quaternionForwardAxis)
         defaults.set(quaternionAddress, forKey: Keys.quaternionAddress)
         defaults.set(eulerAddress, forKey: Keys.eulerAddress)
         defaults.set(gyroscopeAddress, forKey: Keys.gyroscopeAddress)
@@ -117,6 +123,7 @@ final class SettingsStore: ObservableObject {
             sendEuler == preset.sendEuler &&
             sendGyroscope == preset.sendGyroscope &&
             sendAcceleration == preset.sendAcceleration &&
+            quaternionForwardAxis == preset.quaternionForwardAxis &&
             quaternionAddress == preset.quaternionAddress &&
             eulerAddress == preset.eulerAddress &&
             gyroscopeAddress == preset.gyroscopeAddress &&
@@ -155,6 +162,7 @@ private enum Keys {
     static let sendEuler = "sendEuler"
     static let sendGyroscope = "sendGyroscope"
     static let sendAcceleration = "sendAcceleration"
+    static let quaternionForwardAxis = "quaternionForwardAxis"
     static let quaternionAddress = "quaternionAddress"
     static let eulerAddress = "eulerAddress"
     static let gyroscopeAddress = "gyroscopeAddress"

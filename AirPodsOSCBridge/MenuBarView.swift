@@ -3,7 +3,6 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
-    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -19,7 +18,6 @@ struct MenuBarView: View {
             Divider()
 
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 5) {
-                GridRow { Text("Destination"); Text("\(appState.settings.destinationHost):\(appState.settings.destinationPort)") }
                 GridRow { Text("Send rate"); Text("\(appState.measuredSendRate, format: .number.precision(.fractionLength(1))) packets/s") }
                 GridRow { Text("Packets"); Text("\(appState.packetCount)") }
                 GridRow { Text("Yaw"); Text(angle(appState.yaw)) }
@@ -47,14 +45,18 @@ struct MenuBarView: View {
                     .disabled(!appState.isStreaming)
             }
 
+            SettingsView(settings: appState.settings)
+                .frame(maxHeight: .infinity)
+
+            Divider()
+
             HStack {
-                Button("Settings", action: openSettingsWindow)
                 Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
             }
         }
         .padding(14)
-        .frame(width: 300)
+        .frame(width: 400, height: 720)
     }
 
     private var statusColor: Color {
@@ -67,17 +69,6 @@ struct MenuBarView: View {
 
     private func angle(_ value: Double) -> String {
         String(format: "%.4f rad", value)
-    }
-
-    private func openSettingsWindow() {
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        openSettings()
-        DispatchQueue.main.async {
-            let settingsWindow = NSApplication.shared.windows.first { window in
-                window.title == "Settings"
-            }
-            settingsWindow?.makeKeyAndOrderFront(nil)
-        }
     }
 }
 

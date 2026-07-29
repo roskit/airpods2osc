@@ -12,9 +12,5 @@ struct AirPodsOSCBridgeApp: App {
                 })
         }
         .menuBarExtraStyle(.window)
-
-        Settings {
-            SettingsView(settings: appState.settings)
-        }
     }
 }

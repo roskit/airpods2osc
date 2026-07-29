@@ -11,6 +11,15 @@ enum StreamStatus: String, Sendable {
     case error = "Error"
 }
 
+enum QuaternionForwardAxis: String, CaseIterable, Codable, Sendable {
+    case x
+    case y
+
+    var displayName: String {
+        "\(rawValue.uppercased()) axis"
+    }
+}
+
 struct MotionConfiguration: Sendable, Equatable {
     let host: String
     let port: UInt16
@@ -19,6 +28,7 @@ struct MotionConfiguration: Sendable, Equatable {
     let sendEuler: Bool
     let sendGyroscope: Bool
     let sendAcceleration: Bool
+    let quaternionForwardAxis: QuaternionForwardAxis
     let quaternionAddress: String
     let eulerAddress: String
     let gyroscopeAddress: String
@@ -56,6 +66,7 @@ final class HeadphoneMotionService: @unchecked Sendable {
         sendEuler: false,
         sendGyroscope: false,
         sendAcceleration: false,
+        quaternionForwardAxis: .y,
         quaternionAddress: "/airpods/head/quaternion",
         eulerAddress: "/airpods/head/euler",
         gyroscopeAddress: "/airpods/head/gyro",
@@ -64,7 +75,7 @@ final class HeadphoneMotionService: @unchecked Sendable {
     private var neutralAttitude: CMAttitude?
     private var isStreaming = false
     private var hasSentStreamingStatus = false
-    private var lastPacketDate: TimeInterval = 0
+    private var nextPacketDeadline: TimeInterval = 0
     private var lastSnapshotDate = Date.distantPast
 
     var snapshotHandler: (@Sendable (MotionSnapshot) -> Void)?
@@ -106,7 +117,7 @@ final class HeadphoneMotionService: @unchecked Sendable {
             self.sender.configure(host: self.configuration.host, port: self.configuration.port)
             self.neutralAttitude = nil
             self.hasSentStreamingStatus = false
-            self.lastPacketDate = 0
+            self.nextPacketDeadline = 0
             self.isStreaming = true
 
             self.motionManager.startDeviceMotionUpdates(to: self.motionQueue) { [weak self] motion, error in
@@ -163,19 +174,23 @@ final class HeadphoneMotionService: @unchecked Sendable {
         }
 
         let now = ProcessInfo.processInfo.systemUptime
-        if let maximumSendRate = configuration.maximumSendRate,
-           now - lastPacketDate < 1 / maximumSendRate {
-            return
+        if let maximumSendRate = configuration.maximumSendRate {
+            let interval = 1 / maximumSendRate
+            let earlyArrivalTolerance = interval * 0.2
+            guard now >= nextPacketDeadline - earlyArrivalTolerance else { return }
+
+            repeat {
+                nextPacketDeadline += interval
+            } while nextPacketDeadline <= now
         }
-        lastPacketDate = now
 
         if !hasSentStreamingStatus {
             sender.send(OSCEncoder.message(address: "/airpods/status", arguments: [.int32(1)]))
             hasSentStreamingStatus = true
         }
 
-        let quaternion = relativeAttitude.quaternion
         if configuration.sendQuaternion {
+            let quaternion = quaternionForConfiguredForwardAxis(relativeAttitude.quaternion)
             sender.send(OSCEncoder.message(
                 address: configuration.quaternionAddress,
                 arguments: [.float(Float(quaternion.w)), .float(Float(quaternion.x)), .float(Float(quaternion.y)), .float(Float(quaternion.z))]
@@ -231,5 +246,12 @@ final class HeadphoneMotionService: @unchecked Sendable {
             deviceMotionActive: motionManager.isDeviceMotionActive,
             lastError: error
         ))
+    }
+
+    private func quaternionForConfiguredForwardAxis(_ quaternion: CMQuaternion) -> CMQuaternion {
+        guard configuration.quaternionForwardAxis == .x else { return quaternion }
+
+        // Re-expresses the Y-forward Core Motion basis as X-forward while preserving a right-handed coordinate system.
+        return CMQuaternion(x: quaternion.y, y: -quaternion.x, z: quaternion.z, w: quaternion.w)
     }
 }

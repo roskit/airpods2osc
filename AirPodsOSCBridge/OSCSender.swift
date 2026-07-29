@@ -91,6 +91,7 @@ final class OSCSender: @unchecked Sendable {
         guard destination != newDestination else { return }
 
         connection?.cancel()
+        connection = nil
         destination = newDestination
         lastError = nil
 

@@ -24,13 +24,19 @@ struct SettingsView: View {
                     }
                 }
                 Picker("Maximum send rate", selection: $settings.maximumSendRate) {
-                    Text("30 Hz").tag(30)
-                    Text("60 Hz").tag(60)
+                    Text("20 Hz").tag(20)
+                    Text("50 Hz").tag(50)
                     Text("100 Hz").tag(100)
                     Text("120 Hz").tag(120)
                     Text("Unlimited").tag(0)
                 }
                 Toggle("Send quaternion", isOn: $settings.sendQuaternion)
+                Picker("Quaternion forward axis", selection: $settings.quaternionForwardAxis) {
+                    ForEach(QuaternionForwardAxis.allCases, id: \.self) { axis in
+                        Text(axis.displayName).tag(axis)
+                    }
+                }
+                .disabled(!settings.sendQuaternion)
                 TextField("Quaternion address", text: $settings.quaternionAddress)
                     .disabled(!settings.sendQuaternion)
                 Toggle("Send Euler angles (radians)", isOn: $settings.sendEuler)
@@ -49,7 +55,5 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .padding()
-        .frame(width: 380)
     }
 }
