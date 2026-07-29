@@ -3,6 +3,12 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
+    @ObservedObject private var settings: SettingsStore
+
+    init(appState: AppState) {
+        self.appState = appState
+        _settings = ObservedObject(wrappedValue: appState.settings)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -13,6 +19,17 @@ struct MenuBarView: View {
                 Text(appState.status.rawValue)
                     .font(.headline)
                 Spacer()
+            }
+                        
+            
+            HStack {
+                Button("Start", action: appState.start)
+                    .disabled(appState.isStreaming || !appState.motionAvailable)
+                Button("Stop", action: appState.stop)
+                    .disabled(!appState.isStreaming)
+                Button("Recenter", action: appState.recenter)
+                    .keyboardShortcut("k", modifiers: .command)
+                    .disabled(!appState.isStreaming)
             }
 
             Divider()
@@ -35,18 +52,9 @@ struct MenuBarView: View {
 
             Divider()
 
-            HStack {
-                Button("Start", action: appState.start)
-                    .disabled(appState.isStreaming || !appState.motionAvailable)
-                Button("Stop", action: appState.stop)
-                    .disabled(!appState.isStreaming)
-                Button("Recenter", action: appState.recenter)
-                    .keyboardShortcut("k", modifiers: .command)
-                    .disabled(!appState.isStreaming)
-            }
-
-            SettingsView(settings: appState.settings)
+            settingsView
                 .frame(maxHeight: .infinity)
+                .background(.white)
 
             Divider()
 
@@ -56,7 +64,7 @@ struct MenuBarView: View {
             }
         }
         .padding(14)
-        .frame(width: 400, height: 720)
+        .frame(width: 400, height: 640)
     }
 
     private var statusColor: Color {
@@ -68,7 +76,66 @@ struct MenuBarView: View {
     }
 
     private func angle(_ value: Double) -> String {
-        String(format: "%.4f rad", value)
+        String(format: "%.2f rad", value)
+    }
+
+    private var settingsView: some View {
+        Form {
+            Section("Config") {
+                Picker("Preset", selection: Binding(
+                    get: { settings.selectedPresetID },
+                    set: settings.selectPreset
+                )) {
+                    Text("Custom").tag("custom")
+                    ForEach(settings.presets) { preset in
+                        Text(preset.name).tag(preset.id)
+                    }
+                }
+                Picker("Maximum send rate", selection: $settings.maximumSendRate) {
+                    Text("20 Hz").tag(20)
+                    Text("50 Hz").tag(50)
+                    Text("100 Hz").tag(100)
+                    Text("120 Hz").tag(120)
+                    Text("Unlimited").tag(0)
+                }
+
+            }
+
+            Section("OSC Destination") {
+                TextField("Host", text: $settings.destinationHost)
+                TextField("Port", value: $settings.destinationPort, format: .number)
+                    .onChange(of: settings.destinationPort) { _, port in
+                        settings.destinationPort = min(max(port, 1), 65_535)
+                    }
+            }
+
+            Section("Advanced") {
+                Toggle("Send quaternion", isOn: $settings.sendQuaternion)
+                Picker("Quaternion forward axis", selection: $settings.quaternionForwardAxis) {
+                    ForEach(QuaternionForwardAxis.allCases, id: \.self) { axis in
+                        Text(axis.displayName).tag(axis)
+                    }
+                }
+                .disabled(!settings.sendQuaternion)
+                TextField("Quaternion address", text: $settings.quaternionAddress)
+                    .disabled(!settings.sendQuaternion)
+                Toggle("Send Euler angles (radians)", isOn: $settings.sendEuler)
+                TextField("Euler address", text: $settings.eulerAddress)
+                    .disabled(!settings.sendEuler)
+                Toggle("Send gyroscope", isOn: $settings.sendGyroscope)
+                TextField("Gyroscope address", text: $settings.gyroscopeAddress)
+                    .disabled(!settings.sendGyroscope)
+                Toggle("Send acceleration", isOn: $settings.sendAcceleration)
+                TextField("Acceleration address", text: $settings.accelerationAddress)
+                    .disabled(!settings.sendAcceleration)
+                HStack {
+                    Spacer()
+                    Button("Reset OSC addresses", action: settings.resetOSCAddresses)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding(.all, 0)
     }
 }
 

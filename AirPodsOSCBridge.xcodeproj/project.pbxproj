@@ -14,7 +14,6 @@
 		A10000000000000000000005 /* OSCEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* OSCEncoder.swift */; };
 		A10000000000000000000006 /* OSCSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* OSCSender.swift */; };
 		A10000000000000000000007 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* SettingsStore.swift */; };
-		A10000000000000000000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* SettingsView.swift */; };
 		A10000000000000000000009 /* OSCEncoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* OSCEncoderTests.swift */; };
 		A10000000000000000000010 /* OSCPresets.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* OSCPresets.json */; };
 /* End PBXBuildFile section */
@@ -37,7 +36,6 @@
 		A20000000000000000000005 /* OSCEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSCEncoder.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* OSCSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSCSender.swift; sourceTree = "<group>"; };
 		A20000000000000000000007 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
-		A20000000000000000000008 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A20000000000000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000010 /* AirPodsOSCBridge.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AirPodsOSCBridge.entitlements; sourceTree = "<group>"; };
 		A20000000000000000000011 /* OSCEncoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSCEncoderTests.swift; sourceTree = "<group>"; };
@@ -83,7 +81,6 @@
 				A20000000000000000000005 /* OSCEncoder.swift */,
 				A20000000000000000000006 /* OSCSender.swift */,
 				A20000000000000000000007 /* SettingsStore.swift */,
-				A20000000000000000000008 /* SettingsView.swift */,
 				A20000000000000000000014 /* OSCPresets.json */,
 				A20000000000000000000009 /* Info.plist */,
 				A20000000000000000000010 /* AirPodsOSCBridge.entitlements */,
@@ -205,7 +202,6 @@
 				A10000000000000000000005 /* OSCEncoder.swift in Sources */,
 				A10000000000000000000006 /* OSCSender.swift in Sources */,
 				A10000000000000000000007 /* SettingsStore.swift in Sources */,
-				A10000000000000000000008 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
