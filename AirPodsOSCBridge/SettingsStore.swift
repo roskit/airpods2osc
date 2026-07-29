@@ -7,6 +7,8 @@ final class SettingsStore: ObservableObject {
     @Published var maximumSendRate: Int { didSet { persistAndNotify() } }
     @Published var sendQuaternion: Bool { didSet { persistAndNotify() } }
     @Published var sendEuler: Bool { didSet { persistAndNotify() } }
+    @Published var sendGyroscope: Bool { didSet { persistAndNotify() } }
+    @Published var sendAcceleration: Bool { didSet { persistAndNotify() } }
 
     var configurationDidChange: (() -> Void)?
 
@@ -17,7 +19,9 @@ final class SettingsStore: ObservableObject {
         let savedRate = defaults.object(forKey: Keys.maximumSendRate) as? Int
         maximumSendRate = savedRate ?? 100
         sendQuaternion = defaults.object(forKey: Keys.sendQuaternion) as? Bool ?? true
-        sendEuler = defaults.object(forKey: Keys.sendEuler) as? Bool ?? true
+        sendEuler = defaults.object(forKey: Keys.sendEuler) as? Bool ?? false
+        sendGyroscope = defaults.object(forKey: Keys.sendGyroscope) as? Bool ?? false
+        sendAcceleration = defaults.object(forKey: Keys.sendAcceleration) as? Bool ?? false
     }
 
     var motionConfiguration: MotionConfiguration {
@@ -26,7 +30,9 @@ final class SettingsStore: ObservableObject {
             port: UInt16(clamping: destinationPort),
             maximumSendRate: maximumSendRate == 0 ? nil : Double(maximumSendRate),
             sendQuaternion: sendQuaternion,
-            sendEuler: sendEuler
+            sendEuler: sendEuler,
+            sendGyroscope: sendGyroscope,
+            sendAcceleration: sendAcceleration
         )
     }
 
@@ -37,6 +43,8 @@ final class SettingsStore: ObservableObject {
         defaults.set(maximumSendRate, forKey: Keys.maximumSendRate)
         defaults.set(sendQuaternion, forKey: Keys.sendQuaternion)
         defaults.set(sendEuler, forKey: Keys.sendEuler)
+        defaults.set(sendGyroscope, forKey: Keys.sendGyroscope)
+        defaults.set(sendAcceleration, forKey: Keys.sendAcceleration)
         configurationDidChange?()
     }
 }
@@ -47,4 +55,6 @@ private enum Keys {
     static let maximumSendRate = "maximumSendRate"
     static let sendQuaternion = "sendQuaternion"
     static let sendEuler = "sendEuler"
+    static let sendGyroscope = "sendGyroscope"
+    static let sendAcceleration = "sendAcceleration"
 }

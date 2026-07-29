@@ -16,7 +16,9 @@ final class AppState: ObservableObject {
     private let motionService = HeadphoneMotionService()
     private var lastPacketCount: UInt64 = 0
     private var lastRateMeasurement = Date()
-    private var resumeAfterActive = false
+    private var isMenuOpen = false
+    private var pendingSnapshot: MotionSnapshot?
+    private var pendingDiagnostics: SenderDiagnostics?
 
     init() {
         let availableMotion = motionService.isMotionAvailable
@@ -51,22 +53,26 @@ final class AppState: ObservableObject {
         motionService.recenter()
     }
 
-    func handleScenePhase(_ phase: ScenePhase) {
-        switch phase {
-        case .inactive, .background:
-            resumeAfterActive = isStreaming
-            if resumeAfterActive { stop() }
-        case .active:
-            if resumeAfterActive {
-                resumeAfterActive = false
-                start()
-            }
-        @unknown default:
-            break
+    func setMenuOpen(_ isOpen: Bool) {
+        guard isMenuOpen != isOpen else { return }
+        isMenuOpen = isOpen
+
+        guard isOpen else { return }
+        if let pendingSnapshot {
+            apply(pendingSnapshot)
+            self.pendingSnapshot = nil
+        }
+        if let pendingDiagnostics {
+            apply(pendingDiagnostics)
+            self.pendingDiagnostics = nil
         }
     }
 
     private func apply(_ snapshot: MotionSnapshot) {
+        guard isMenuOpen else {
+            pendingSnapshot = snapshot
+            return
+        }
         status = snapshot.status
         yaw = snapshot.yaw
         pitch = snapshot.pitch
@@ -77,6 +83,10 @@ final class AppState: ObservableObject {
     }
 
     private func apply(_ diagnostics: SenderDiagnostics) {
+        guard isMenuOpen else {
+            pendingDiagnostics = diagnostics
+            return
+        }
         let now = Date()
         let elapsed = now.timeIntervalSince(lastRateMeasurement)
         if elapsed > 0 {

@@ -17,6 +17,8 @@ struct MotionConfiguration: Sendable, Equatable {
     let maximumSendRate: Double?
     let sendQuaternion: Bool
     let sendEuler: Bool
+    let sendGyroscope: Bool
+    let sendAcceleration: Bool
 }
 
 struct MotionSnapshot: Sendable {
@@ -47,7 +49,9 @@ final class HeadphoneMotionService: @unchecked Sendable {
         port: 9000,
         maximumSendRate: 100,
         sendQuaternion: true,
-        sendEuler: true
+        sendEuler: false,
+        sendGyroscope: false,
+        sendAcceleration: false
     )
     private var neutralAttitude: CMAttitude?
     private var isStreaming = false
@@ -175,14 +179,18 @@ final class HeadphoneMotionService: @unchecked Sendable {
                 arguments: [.float(Float(relativeAttitude.yaw)), .float(Float(relativeAttitude.pitch)), .float(Float(relativeAttitude.roll))]
             ))
         }
-        sender.send(OSCEncoder.message(
-            address: "/airpods/head/gyro",
-            arguments: [.float(Float(motion.rotationRate.x)), .float(Float(motion.rotationRate.y)), .float(Float(motion.rotationRate.z))]
-        ))
-        sender.send(OSCEncoder.message(
-            address: "/airpods/head/accel",
-            arguments: [.float(Float(motion.userAcceleration.x)), .float(Float(motion.userAcceleration.y)), .float(Float(motion.userAcceleration.z))]
-        ))
+        if configuration.sendGyroscope {
+            sender.send(OSCEncoder.message(
+                address: "/airpods/head/gyro",
+                arguments: [.float(Float(motion.rotationRate.x)), .float(Float(motion.rotationRate.y)), .float(Float(motion.rotationRate.z))]
+            ))
+        }
+        if configuration.sendAcceleration {
+            sender.send(OSCEncoder.message(
+                address: "/airpods/head/accel",
+                arguments: [.float(Float(motion.userAcceleration.x)), .float(Float(motion.userAcceleration.y)), .float(Float(motion.userAcceleration.z))]
+            ))
+        }
 
         publish(
             status: .streaming,

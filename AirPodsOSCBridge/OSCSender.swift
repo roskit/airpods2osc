@@ -30,14 +30,17 @@ final class OSCSender: @unchecked Sendable {
 
     func send(_ data: Data) {
         queue.async { [weak self] in
-            guard let self, let connection = self.connection else { return }
+            guard let self else { return }
+            guard let connection = self.connection else {
+                self.startConnectionIfNeeded()
+                return
+            }
 
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self else { return }
                 self.queue.async {
                     if let error {
-                        self.lastError = error.localizedDescription
-                        self.logger.error("OSC UDP send failed: \(error.localizedDescription, privacy: .public)")
+                        self.handleSendError(error, for: connection)
                     } else {
                         self.packetCount &+= 1
                         self.lastSendDate = Date()
@@ -69,8 +72,7 @@ final class OSCSender: @unchecked Sendable {
                 guard let self else { return }
                 self.queue.async {
                     if let error {
-                        self.lastError = error.localizedDescription
-                        self.logger.error("Final OSC UDP send failed: \(error.localizedDescription, privacy: .public)")
+                        self.handleSendError(error, for: connection)
                     } else {
                         self.packetCount &+= 1
                         self.lastSendDate = Date()
@@ -92,16 +94,26 @@ final class OSCSender: @unchecked Sendable {
         destination = newDestination
         lastError = nil
 
-        let parameters = NWParameters.udp
+        startConnectionIfNeeded()
+    }
+
+    private func startConnectionIfNeeded() {
+        guard connection == nil, let destination else { return }
+
         let connection = NWConnection(
-            host: NWEndpoint.Host(host),
-            port: NWEndpoint.Port(rawValue: port)!,
-            using: parameters
+            host: NWEndpoint.Host(destination.host),
+            port: NWEndpoint.Port(rawValue: destination.port)!,
+            using: .udp
         )
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             self.queue.async {
                 if case .failed(let error) = state {
+                    guard self.connection === connection else { return }
+                    if self.isConnectionRefused(error) {
+                        self.connection = nil
+                        return
+                    }
                     self.lastError = error.localizedDescription
                     self.logger.error("OSC connection failed: \(error.localizedDescription, privacy: .public)")
                     self.publishDiagnostics(force: true)
@@ -110,6 +122,24 @@ final class OSCSender: @unchecked Sendable {
         }
         self.connection = connection
         connection.start(queue: queue)
+    }
+
+    private func handleSendError(_ error: NWError, for connection: NWConnection) {
+        if isConnectionRefused(error) {
+            if self.connection === connection {
+                self.connection = nil
+            }
+            return
+        }
+        lastError = error.localizedDescription
+        logger.error("OSC UDP send failed: \(error.localizedDescription, privacy: .public)")
+    }
+
+    private func isConnectionRefused(_ error: NWError) -> Bool {
+        if case .posix(.ECONNREFUSED) = error {
+            return true
+        }
+        return false
     }
 
     private func publishDiagnosticsIfNeeded() {

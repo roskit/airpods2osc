@@ -74,3 +74,48 @@ struct MenuBarView: View {
         openSettings()
     }
 }
+
+struct MenuBarWindowConfigurator: NSViewRepresentable {
+    let visibilityDidChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = MenuBarWindowObserver()
+        view.visibilityDidChange = visibilityDidChange
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let view = nsView as? MenuBarWindowObserver else { return }
+        view.visibilityDidChange = visibilityDidChange
+    }
+}
+
+private final class MenuBarWindowObserver: NSView {
+    var visibilityDidChange: ((Bool) -> Void)?
+    private var visibilityObservation: NSKeyValueObservation?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard let window else { return }
+
+        window.isOpaque = true
+        window.backgroundColor = .windowBackgroundColor
+        wantsLayer = true
+        layer?.isOpaque = true
+        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+
+        visibilityObservation = window.observe(\.isVisible, options: [.initial, .new]) { [weak self] window, _ in
+            DispatchQueue.main.async {
+                self?.visibilityDidChange?(window.isVisible)
+            }
+        }
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil {
+            visibilityObservation = nil
+            visibilityDidChange?(false)
+        }
+        super.viewWillMove(toWindow: newWindow)
+    }
+}

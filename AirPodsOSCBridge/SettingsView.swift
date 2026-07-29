@@ -23,6 +23,8 @@ struct SettingsView: View {
                 }
                 Toggle("Send quaternion", isOn: $settings.sendQuaternion)
                 Toggle("Send Euler angles (radians)", isOn: $settings.sendEuler)
+                Toggle("Send gyroscope", isOn: $settings.sendGyroscope)
+                Toggle("Send acceleration", isOn: $settings.sendAcceleration)
             }
         }
         .formStyle(.grouped)
