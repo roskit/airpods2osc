@@ -9,6 +9,10 @@ final class SettingsStore: ObservableObject {
     @Published var sendEuler: Bool { didSet { persistAndNotify() } }
     @Published var sendGyroscope: Bool { didSet { persistAndNotify() } }
     @Published var sendAcceleration: Bool { didSet { persistAndNotify() } }
+    @Published var quaternionAddress: String { didSet { persistAndNotify() } }
+    @Published var eulerAddress: String { didSet { persistAndNotify() } }
+    @Published var gyroscopeAddress: String { didSet { persistAndNotify() } }
+    @Published var accelerationAddress: String { didSet { persistAndNotify() } }
 
     var configurationDidChange: (() -> Void)?
 
@@ -22,6 +26,10 @@ final class SettingsStore: ObservableObject {
         sendEuler = defaults.object(forKey: Keys.sendEuler) as? Bool ?? false
         sendGyroscope = defaults.object(forKey: Keys.sendGyroscope) as? Bool ?? false
         sendAcceleration = defaults.object(forKey: Keys.sendAcceleration) as? Bool ?? false
+        quaternionAddress = defaults.string(forKey: Keys.quaternionAddress) ?? OSCAddressDefaults.quaternion
+        eulerAddress = defaults.string(forKey: Keys.eulerAddress) ?? OSCAddressDefaults.euler
+        gyroscopeAddress = defaults.string(forKey: Keys.gyroscopeAddress) ?? OSCAddressDefaults.gyroscope
+        accelerationAddress = defaults.string(forKey: Keys.accelerationAddress) ?? OSCAddressDefaults.acceleration
     }
 
     var motionConfiguration: MotionConfiguration {
@@ -32,8 +40,19 @@ final class SettingsStore: ObservableObject {
             sendQuaternion: sendQuaternion,
             sendEuler: sendEuler,
             sendGyroscope: sendGyroscope,
-            sendAcceleration: sendAcceleration
+            sendAcceleration: sendAcceleration,
+            quaternionAddress: normalizedAddress(quaternionAddress, defaultValue: OSCAddressDefaults.quaternion),
+            eulerAddress: normalizedAddress(eulerAddress, defaultValue: OSCAddressDefaults.euler),
+            gyroscopeAddress: normalizedAddress(gyroscopeAddress, defaultValue: OSCAddressDefaults.gyroscope),
+            accelerationAddress: normalizedAddress(accelerationAddress, defaultValue: OSCAddressDefaults.acceleration)
         )
+    }
+
+    func resetOSCAddresses() {
+        quaternionAddress = OSCAddressDefaults.quaternion
+        eulerAddress = OSCAddressDefaults.euler
+        gyroscopeAddress = OSCAddressDefaults.gyroscope
+        accelerationAddress = OSCAddressDefaults.acceleration
     }
 
     private func persistAndNotify() {
@@ -45,8 +64,24 @@ final class SettingsStore: ObservableObject {
         defaults.set(sendEuler, forKey: Keys.sendEuler)
         defaults.set(sendGyroscope, forKey: Keys.sendGyroscope)
         defaults.set(sendAcceleration, forKey: Keys.sendAcceleration)
+        defaults.set(quaternionAddress, forKey: Keys.quaternionAddress)
+        defaults.set(eulerAddress, forKey: Keys.eulerAddress)
+        defaults.set(gyroscopeAddress, forKey: Keys.gyroscopeAddress)
+        defaults.set(accelerationAddress, forKey: Keys.accelerationAddress)
         configurationDidChange?()
     }
+
+    private func normalizedAddress(_ value: String, defaultValue: String) -> String {
+        let address = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return address.isEmpty ? defaultValue : address
+    }
+}
+
+private enum OSCAddressDefaults {
+    static let quaternion = "/airpods/head/quaternion"
+    static let euler = "/airpods/head/euler"
+    static let gyroscope = "/airpods/head/gyro"
+    static let acceleration = "/airpods/head/accel"
 }
 
 private enum Keys {
@@ -57,4 +92,8 @@ private enum Keys {
     static let sendEuler = "sendEuler"
     static let sendGyroscope = "sendGyroscope"
     static let sendAcceleration = "sendAcceleration"
+    static let quaternionAddress = "quaternionAddress"
+    static let eulerAddress = "eulerAddress"
+    static let gyroscopeAddress = "gyroscopeAddress"
+    static let accelerationAddress = "accelerationAddress"
 }

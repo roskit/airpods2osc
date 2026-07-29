@@ -22,9 +22,21 @@ struct SettingsView: View {
                     Text("Unlimited").tag(0)
                 }
                 Toggle("Send quaternion", isOn: $settings.sendQuaternion)
+                TextField("Quaternion address", text: $settings.quaternionAddress)
+                    .disabled(!settings.sendQuaternion)
                 Toggle("Send Euler angles (radians)", isOn: $settings.sendEuler)
+                TextField("Euler address", text: $settings.eulerAddress)
+                    .disabled(!settings.sendEuler)
                 Toggle("Send gyroscope", isOn: $settings.sendGyroscope)
+                TextField("Gyroscope address", text: $settings.gyroscopeAddress)
+                    .disabled(!settings.sendGyroscope)
                 Toggle("Send acceleration", isOn: $settings.sendAcceleration)
+                TextField("Acceleration address", text: $settings.accelerationAddress)
+                    .disabled(!settings.sendAcceleration)
+                HStack {
+                    Spacer()
+                    Button("Reset OSC addresses", action: settings.resetOSCAddresses)
+                }
             }
         }
         .formStyle(.grouped)

@@ -19,6 +19,10 @@ struct MotionConfiguration: Sendable, Equatable {
     let sendEuler: Bool
     let sendGyroscope: Bool
     let sendAcceleration: Bool
+    let quaternionAddress: String
+    let eulerAddress: String
+    let gyroscopeAddress: String
+    let accelerationAddress: String
 }
 
 struct MotionSnapshot: Sendable {
@@ -51,7 +55,11 @@ final class HeadphoneMotionService: @unchecked Sendable {
         sendQuaternion: true,
         sendEuler: false,
         sendGyroscope: false,
-        sendAcceleration: false
+        sendAcceleration: false,
+        quaternionAddress: "/airpods/head/quaternion",
+        eulerAddress: "/airpods/head/euler",
+        gyroscopeAddress: "/airpods/head/gyro",
+        accelerationAddress: "/airpods/head/accel"
     )
     private var neutralAttitude: CMAttitude?
     private var isStreaming = false
@@ -169,25 +177,25 @@ final class HeadphoneMotionService: @unchecked Sendable {
         let quaternion = relativeAttitude.quaternion
         if configuration.sendQuaternion {
             sender.send(OSCEncoder.message(
-                address: "/airpods/head/quaternion",
+                address: configuration.quaternionAddress,
                 arguments: [.float(Float(quaternion.w)), .float(Float(quaternion.x)), .float(Float(quaternion.y)), .float(Float(quaternion.z))]
             ))
         }
         if configuration.sendEuler {
             sender.send(OSCEncoder.message(
-                address: "/airpods/head/euler",
+                address: configuration.eulerAddress,
                 arguments: [.float(Float(relativeAttitude.yaw)), .float(Float(relativeAttitude.pitch)), .float(Float(relativeAttitude.roll))]
             ))
         }
         if configuration.sendGyroscope {
             sender.send(OSCEncoder.message(
-                address: "/airpods/head/gyro",
+                address: configuration.gyroscopeAddress,
                 arguments: [.float(Float(motion.rotationRate.x)), .float(Float(motion.rotationRate.y)), .float(Float(motion.rotationRate.z))]
             ))
         }
         if configuration.sendAcceleration {
             sender.send(OSCEncoder.message(
-                address: "/airpods/head/accel",
+                address: configuration.accelerationAddress,
                 arguments: [.float(Float(motion.userAcceleration.x)), .float(Float(motion.userAcceleration.y)), .float(Float(motion.userAcceleration.z))]
             ))
         }
