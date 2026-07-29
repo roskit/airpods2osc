@@ -1,0 +1,28 @@
+[
+  {
+    "id": "lisa",
+    "name": "L-ISA",
+    "destinationPort": 8880,
+    "sendQuaternion": false,
+    "sendEuler": true,
+    "sendGyroscope": false,
+    "sendAcceleration": false,
+    "quaternionAddress": "/airpods/head/quaternion",
+    "eulerAddress": "/ht/ypr",
+    "gyroscopeAddress": "/airpods/head/gyro",
+    "accelerationAddress": "/airpods/head/accel"
+  },
+  {
+    "id": "iem",
+    "name": "IEM SceneRotator",
+    "destinationPort": 9000,
+    "sendQuaternion": true,
+    "sendEuler": false,
+    "sendGyroscope": false,
+    "sendAcceleration": false,
+    "quaternionAddress": "/SceneRotator/quaternions",
+    "eulerAddress": "/SceneRotator/ypr",
+    "gyroscopeAddress": "/SceneRotator/gyro",
+    "accelerationAddress": "/SceneRotator/accel"
+  }
+]

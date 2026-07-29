@@ -72,6 +72,12 @@ struct MenuBarView: View {
     private func openSettingsWindow() {
         NSApplication.shared.activate(ignoringOtherApps: true)
         openSettings()
+        DispatchQueue.main.async {
+            let settingsWindow = NSApplication.shared.windows.first { window in
+                window.title == "Settings"
+            }
+            settingsWindow?.makeKeyAndOrderFront(nil)
+        }
     }
 }
 

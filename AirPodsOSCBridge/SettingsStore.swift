@@ -1,5 +1,19 @@
 import Foundation
 
+struct OSCPreset: Codable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    let destinationPort: Int
+    let sendQuaternion: Bool
+    let sendEuler: Bool
+    let sendGyroscope: Bool
+    let sendAcceleration: Bool
+    let quaternionAddress: String
+    let eulerAddress: String
+    let gyroscopeAddress: String
+    let accelerationAddress: String
+}
+
 @MainActor
 final class SettingsStore: ObservableObject {
     @Published var destinationHost: String { didSet { persistAndNotify() } }
@@ -15,6 +29,9 @@ final class SettingsStore: ObservableObject {
     @Published var accelerationAddress: String { didSet { persistAndNotify() } }
 
     var configurationDidChange: (() -> Void)?
+    private var isApplyingPreset = false
+
+    let presets: [OSCPreset]
 
     init(defaults: UserDefaults = .standard) {
         destinationHost = defaults.string(forKey: Keys.destinationHost) ?? "127.0.0.1"
@@ -30,6 +47,7 @@ final class SettingsStore: ObservableObject {
         eulerAddress = defaults.string(forKey: Keys.eulerAddress) ?? OSCAddressDefaults.euler
         gyroscopeAddress = defaults.string(forKey: Keys.gyroscopeAddress) ?? OSCAddressDefaults.gyroscope
         accelerationAddress = defaults.string(forKey: Keys.accelerationAddress) ?? OSCAddressDefaults.acceleration
+        presets = OSCPreset.loadBundledPresets()
     }
 
     var motionConfiguration: MotionConfiguration {
@@ -55,7 +73,29 @@ final class SettingsStore: ObservableObject {
         accelerationAddress = OSCAddressDefaults.acceleration
     }
 
+    var selectedPresetID: String {
+        presets.first(where: matches)?.id ?? "custom"
+    }
+
+    func selectPreset(_ id: String) {
+        guard let preset = presets.first(where: { $0.id == id }) else { return }
+
+        isApplyingPreset = true
+        destinationPort = preset.destinationPort
+        sendQuaternion = preset.sendQuaternion
+        sendEuler = preset.sendEuler
+        sendGyroscope = preset.sendGyroscope
+        sendAcceleration = preset.sendAcceleration
+        quaternionAddress = preset.quaternionAddress
+        eulerAddress = preset.eulerAddress
+        gyroscopeAddress = preset.gyroscopeAddress
+        accelerationAddress = preset.accelerationAddress
+        isApplyingPreset = false
+        persistAndNotify()
+    }
+
     private func persistAndNotify() {
+        guard !isApplyingPreset else { return }
         let defaults = UserDefaults.standard
         defaults.set(destinationHost, forKey: Keys.destinationHost)
         defaults.set(destinationPort, forKey: Keys.destinationPort)
@@ -71,9 +111,32 @@ final class SettingsStore: ObservableObject {
         configurationDidChange?()
     }
 
+    private func matches(_ preset: OSCPreset) -> Bool {
+        destinationPort == preset.destinationPort &&
+            sendQuaternion == preset.sendQuaternion &&
+            sendEuler == preset.sendEuler &&
+            sendGyroscope == preset.sendGyroscope &&
+            sendAcceleration == preset.sendAcceleration &&
+            quaternionAddress == preset.quaternionAddress &&
+            eulerAddress == preset.eulerAddress &&
+            gyroscopeAddress == preset.gyroscopeAddress &&
+            accelerationAddress == preset.accelerationAddress
+    }
+
     private func normalizedAddress(_ value: String, defaultValue: String) -> String {
         let address = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return address.isEmpty ? defaultValue : address
+    }
+}
+
+private extension OSCPreset {
+    static func loadBundledPresets() -> [OSCPreset] {
+        guard let url = Bundle.main.url(forResource: "OSCPresets", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let presets = try? JSONDecoder().decode([OSCPreset].self, from: data) else {
+            return []
+        }
+        return presets
     }
 }
 

@@ -14,6 +14,15 @@ struct SettingsView: View {
             }
 
             Section("Output") {
+                Picker("Preset", selection: Binding(
+                    get: { settings.selectedPresetID },
+                    set: settings.selectPreset
+                )) {
+                    Text("Custom").tag("custom")
+                    ForEach(settings.presets) { preset in
+                        Text(preset.name).tag(preset.id)
+                    }
+                }
                 Picker("Maximum send rate", selection: $settings.maximumSendRate) {
                     Text("30 Hz").tag(30)
                     Text("60 Hz").tag(60)
